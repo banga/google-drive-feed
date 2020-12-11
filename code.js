@@ -32,7 +32,10 @@ function sendFeedDigest() {
   const fileObjsByFolderIds = new Map();
   for (const fileObj of fileObjs) {
     const { folders } = fileObj;
-    const folderIds = folders.map((folder) => folder.getId()).join(",");
+    const folderIds = folders
+      .map((folder) => folder.getId())
+      .sort()
+      .join(",");
     if (!fileObjsByFolderIds.has(folderIds)) {
       fileObjsByFolderIds.set(folderIds, []);
     }
@@ -47,10 +50,10 @@ function sendFeedDigest() {
     .map((fileObjs) => {
       const folders = fileObjs[0].folders;
       const folderPaths = folders.flatMap(getFolderPaths_);
-      const folderDescription = folderPaths
-              .map((folderPath) => folderPath.join(" &gt; "))
-              .join("<br/>")
-          || "(No name)";
+      const folderDescription =
+        folderPaths
+          .map((folderPath) => folderPath.join(" &gt; "))
+          .join("<br/>") || "(No name)";
       return `
         <div style="margin-bottom: 15px">
           <span style="font-size: 11px; color: #666">${folderDescription}</span>
@@ -98,16 +101,12 @@ function sendFeedDigest() {
 function getFolderPaths_(folder) {
   const paths = [];
   const parents = folder.getParents();
+  const folderName = folder.getName();
   while (parents.hasNext()) {
     const parent = parents.next();
-    const parentPaths = getFolderPaths_(parent);
-    if (parentPaths.length === 0) {
-      paths.push([parent.getName()]);
-    } else {
-      for (const parentPath of parentPaths) {
-        paths.push([...parentPath, parent.getName()]);
-      }
+    for (const parentPath of getFolderPaths_(parent)) {
+      paths.push([...parentPath, folderName]);
     }
   }
-  return paths;
+  return paths.length > 0 ? paths : [[folderName]];
 }
